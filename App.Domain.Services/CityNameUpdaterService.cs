@@ -1,5 +1,6 @@
 ﻿using App.Domain.Core.Interfaces.Repo;
 using App.Domain.Core.Interfaces.UOf;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,12 +13,12 @@ namespace App.Domain.Services
 {
     public class CityNameUpdaterService : BackgroundService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<CityNameUpdaterService> _logger;
 
-        public CityNameUpdaterService(IUnitOfWork unitOfWork, ILogger<CityNameUpdaterService> logger)
+        public CityNameUpdaterService(IServiceProvider serviceProvider, ILogger<CityNameUpdaterService> logger)
         {
-            _unitOfWork = unitOfWork;
+            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 
@@ -32,23 +33,27 @@ namespace App.Domain.Services
                     await AddStarToCityNames();
                 }
 
-        
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
 
-        
         private async Task AddStarToCityNames()
         {
-            var cities = _unitOfWork.Cities.GetAllAsync();
-            foreach (var city in cities.Result)
+            // Create a new scope to resolve scoped services like IUnitOfWork
+            using (var scope = _serviceProvider.CreateScope())
             {
-                city.Name = "*" + city.Name;
-                _unitOfWork.Cities.Update(city);
-            }
-            await _unitOfWork.CompleteAsync(); 
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            _logger.LogInformation("City names updated with a star at {time}", DateTimeOffset.Now);
+                var cities = await unitOfWork.Cities.GetAllAsync();
+                foreach (var city in cities)
+                {
+                    city.Name = "*" + city.Name; // Add star to city name
+                    unitOfWork.Cities.Update(city); // Update city
+                }
+                await unitOfWork.CompleteAsync(); // Commit changes
+
+                _logger.LogInformation("City names updated with a star at {time}", DateTimeOffset.Now);
+            }
         }
     }
 }
