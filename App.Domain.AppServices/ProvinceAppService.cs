@@ -22,30 +22,37 @@ namespace App.Domain.AppServices
         public async Task<IEnumerable<Province>> GetAllAsync() => await _provinceService.GetAllAsync();
         public async Task<Province?> GetByIdAsync(int id) => await _provinceService.GetByIdAsync(id);
         public async Task UpdateAsync(Province province) => await _provinceService.UpdateAsync(province);
-        public void GenerateRandomProvinces()
+        public async void GenerateRandomProvinces()
         {
             Random random = new Random();
             string[] provinceNames = new string[] { "Tehran", "Fars", "Isfahan", "Kerman", "Mazandaran", "Kurdistan", "Lorestan", "Khuzestan", "East Azerbaijan", "West Azerbaijan" };
 
-            foreach (var name in provinceNames)
-            {
-                var province = new Province
+            //foreach (var name in provinceNames)
+            //{
+            //    var province = new Province
+            //    {
+            //        Name = $"{name} {random.Next(1000, 9999)}" 
+            //    };
+            //    _provinceService.AddAsync(province);
+            //}
+            var tasks = provinceNames
+                .Select(name => _provinceService
+                .AddAsync(new Province
                 {
-                    Name = $"{name} {random.Next(1000, 9999)}" 
-                };
-                _provinceService.AddAsync(province);
-            }
+                    Name = $"{name} {random.Next(1000, 9999)}"
+                })).ToArray();
+            await Task.WhenAll(tasks);
         }
         public async void AddStarToProvinceName(int provinceId)
         {
-            var province = await _provinceService.GetByIdAsync(provinceId); 
+            var province = await _provinceService.GetByIdAsync(provinceId);
 
             if (province != null)
             {
-                province.Name = "*" + province.Name; 
+                province.Name = "*" + province.Name;
                 await _provinceService.UpdateAsync(province);
             }
-            
+
         }
     }
 }
