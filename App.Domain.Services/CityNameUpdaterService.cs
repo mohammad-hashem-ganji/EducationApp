@@ -24,7 +24,7 @@ namespace App.Domain.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Run the task at 8 AM daily
+         
             while (!stoppingToken.IsCancellationRequested)
             {
                 var now = DateTime.Now;
@@ -39,7 +39,7 @@ namespace App.Domain.Services
 
         private async Task AddStarToCityNames()
         {
-            // Create a new scope to resolve scoped services like IUnitOfWork
+         
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
@@ -47,10 +47,10 @@ namespace App.Domain.Services
                 var cities = await unitOfWork.Cities.GetAllAsync();
                 foreach (var city in cities)
                 {
-                    city.Name = "*" + city.Name; // Add star to city name
-                    unitOfWork.Cities.Update(city); // Update city
+                    city.Name = "*" + city.Name; 
+                    unitOfWork.Cities.Update(city); 
                 }
-                await unitOfWork.CompleteAsync(); // Commit changes
+                await unitOfWork.CompleteAsync(); 
 
                 _logger.LogInformation("City names updated with a star at {time}", DateTimeOffset.Now);
             }
