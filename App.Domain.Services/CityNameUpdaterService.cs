@@ -24,18 +24,23 @@ namespace App.Domain.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-         
             while (!stoppingToken.IsCancellationRequested)
             {
                 var now = DateTime.Now;
-                if (now.Hour == 8 && now.Minute == 0)
+                var nextExecutionTime = DateTime.Today.AddHours(8); 
+                if (now > nextExecutionTime)
+                {
+                    nextExecutionTime = nextExecutionTime.AddDays(1);
+                }
+                var timeUntilNextExecution = nextExecutionTime - now;
+                await Task.Delay(timeUntilNextExecution, stoppingToken);
+                if (!stoppingToken.IsCancellationRequested)
                 {
                     await AddStarToCityNames();
                 }
-
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
+
 
         private async Task AddStarToCityNames()
         {
